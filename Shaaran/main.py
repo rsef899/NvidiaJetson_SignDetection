@@ -5,6 +5,7 @@ import os
 import numpy as np
 import joblib
 import pandas as pd
+import sklearn
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from skimage.transform import resize
 from sklearn.metrics import f1_score, precision_score,recall_score,confusion_matrix
@@ -14,16 +15,18 @@ from sklearn import svm
 from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 import time
-
-datadir = "C:\\Users\\shaar\\OneDrive\\Documents\\NvidiaJetson_SignDetection\\Shaaran\\dataset"
-pickle_filepath = "C:\\Users\\shaar\\OneDrive\\Documents\\NvidiaJetson_SignDetection\\Shaaran\\pickled.pickle"
+print(sklearn.__version__)
+print(joblib.__version__)
+datadir = "/Users/shaaranelango/Downloads/NvidiaJetson_SignDetection/Shaaran/dataset"
+pickle_filepath = "/Users/shaaranelango/Downloads/NvidiaJetson_SignDetection/Shaaran/pickled.pickle"
 i=0
 
 # Load or initialize the processed images data
 flat_data_arr = []
 target_arr = []
 model_filename = 'SVM.joblib'
-categories = ['road','stop']
+categories = ['road','stop','speed','yellow','red','green']
+# categories = ['yellow','speed','stop','red','green']
 
 if os.path.exists(pickle_filepath):
     with open(pickle_filepath, "rb") as f:
@@ -61,9 +64,23 @@ else:
 x=df.iloc[:,:-1] # Contains the rgb vals for each pixel
 y=df.iloc[:,-1] # Contains the targets (what it is)
 
-# Train:Test split of 85:15, I believe this is a substantial enough split such that we are unlikely to overtrain and we have enough data to test with.
-x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.5,random_state=3,stratify=y)
+#x = MinMaxScaler().fit_transform(x) 
+x_scaled = StandardScaler().fit_transform(x)
 
+x = pd.DataFrame(x_scaled, columns=x.columns)
+
+# Train:Test split of 85:15, I believe this is a substantial enough split such that we are unlikely to overtrain and we have enough data to test with.
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.15,random_state=3,stratify=y)
+
+# x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.70,random_state=3,stratify=y) # Using a very small training set (0.1) to get good hyperparams before doing the big training
+# param_grid={'C':[0.1,1,10],'gamma':[0.0001,0.001,0.1,1],'kernel':['rbf','poly']}
+# svc = svm.SVC(probability = True)
+# print("The training of the SVC model is started, please wait for while as it may take few minutes to complete")
+# svcModel=GridSearchCV(svc,param_grid)
+# # After running for about 12 hours, the best params were given as: [C = 0.1, gamma = 0.0001, kernel = poly]
+# svcModel.fit(x_train,y_train)
+# print('The Model is trained well with the given parameters')
+# print(svcModel.best_params_)
 
 svcModel_filename = 'SVCModel.joblib'
 if os.path.exists(svcModel_filename):
@@ -71,7 +88,7 @@ if os.path.exists(svcModel_filename):
     svcModel = joblib.load(svcModel_filename)
 else:
     print("Training SVC")
-    svcModel = svm.SVC(kernel='rbf',gamma=0.001,C=10,max_iter=100000000)
+    svcModel = svm.SVC(kernel='poly',gamma=0.0001,C=0.1,max_iter=100000000,probability=False)
     ## Using original 85:15 train-test split
     svcModel.fit(x_train,y_train)
     joblib.dump(svcModel, svcModel_filename)
@@ -84,38 +101,46 @@ prec = precision_score(y_test,svc_pred,average='weighted')
 recall = recall_score(y_test,svc_pred,average='weighted')
 f1 = f1_score(y_test,svc_pred,average='weighted')
 
+
+#y_pred_labels = np.argmax(y_test, axis=1) # Grabbing the labels from the predictions
+## Confusion Matrix (just for some testing)
+confusion = confusion_matrix(y_test, svc_pred,labels=categories)
+print(confusion)
+
 print("Precision Score for SVM:",prec)
 print("Recall Score for SVM:",recall)
 print("F1 Score for SVM:",f1)
 
 
-# num_samples = 1  # Change this to the number of random elements you want to select
+num_samples = 5  # Change this to the number of random elements you want to select
 
-# # Use sample method to select random rows
-# random_rows = x_test.sample(n=num_samples, random_state=48)
+# Use sample method to select random rows
+random_rows = x_test.sample(n=num_samples, random_state=48)
 
-# # Use loc to get the corresponding rows from y_test
-# random_labels = y_test.loc[random_rows.index]
-
-
-# ## For testing ##
-# print(random_rows.shape)
-# print(random_labels.shape)
-# print(random_labels)
-images = ["testStop.jpg","testRoad.jpg","hardTestRoad.jpg"]
-
-for image in images:
-
-    print("PREDICTING SVC")
-    start_time = time.time()
-    svcPred = svcModel.predict(resize(imread(image),(112,112,3)).reshape(1,-1))
-    end_time = time.time()
+# Use loc to get the corresponding rows from y_test
+random_labels = y_test.loc[random_rows.index]
 
 
-    print(svcPred)
+## For testing ##
+print(random_rows.shape)
+print(random_labels.shape)
+print(random_labels)
 
-    # Calculate the elapsed time
-    elapsed_time = end_time - start_time
+svcPred = svcModel.predict(random_rows)
+print(svcPred)
 
-    print(f"Execution time: {elapsed_time} seconds")
+# for image in images:
+
+#     print("PREDICTING SVC")
+#     start_time = time.time()
+#     svcPred = svcModel.predict(resize(imread(image),(112,112,3)).reshape(1,-1))
+#     end_time = time.time()
+
+
+#     print(svcPred)
+
+#     # Calculate the elapsed time
+#     elapsed_time = end_time - start_time
+
+#     print(f"Execution time: {elapsed_time} seconds")
 
