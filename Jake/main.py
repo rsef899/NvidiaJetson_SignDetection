@@ -25,7 +25,7 @@ def plot_category_sizes(category_sizes):
 
 def read_categories():
     # reads all the categories to an array for analysis
-    labelsFile = "Assignment-Dataset/labels.csv"
+    labelsFile = "Jake/Assignment-Dataset/labels.csv"
     df = pd.read_csv(labelsFile)
     return df.to_numpy()
 
@@ -45,7 +45,7 @@ def read_in_data(save_to_file=True, read_labels=True, num_categories=43):
         categoryArray = read_categories()
 
     # data will be found in this directory (is the renamed unzipped folder from kaggle - must be added in)
-    dataDirectory = 'Assignment-Dataset/myData'
+    dataDirectory = 'Jake/Assignment-Dataset/myData'
 
     # add in all files
     Category_numbers = range(0, num_categories)
@@ -162,24 +162,24 @@ def load_split_dataset():
 show_time.print_time(True, True)
 
 # get full dataset from file
-# read_in_data(read_labels=False, num_categories=6)
-df = open_data(read_labels=False)
-# quick_analysis(df)
+#read_in_data(read_labels=False, num_categories=6)
+#df = open_data(read_labels=False)
+#quick_analysis(df)
 
 # plot bar graph of size of each category
 # plot_category_sizes(category_sizes)
 
 # split into training and testing and validation datasets, saving to file as well
-# split_dataset(df, 0.2, 0.2, True, True)
+#split_dataset(df, 0.2, 0.2, True, True)
 x_training, x_testing, x_valid, y_training, y_testing, y_valid = load_split_dataset()
 
 # try train the models
 # mlp_model.fit_and_train_mlp_model(x_training, x_valid, y_training, y_valid, 0.01, 2500, True)
-# svm_model.fit_and_train_svm_model(x_training, x_valid, y_training, y_valid, True)
+#svm_model.fit_and_train_svm_model(x_training, x_valid, y_training, y_valid, True)
 # show_time.print_time(True, True)
 
 # now that we have correct hyper-parameters, use testing dataset to check model
-svm_model.validation(x_testing, y_testing)
+# svm_model.validation(x_testing, y_testing)
 svm_model.individual_test(x_testing, y_testing)
 # svm_model.visual_all_test(x_testing, y_testing)
 # mlp_model.validation(x_testing, y_testing)

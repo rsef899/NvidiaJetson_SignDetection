@@ -1,3 +1,4 @@
+
 import tensorflow as tf
 import pickle
 import math
@@ -15,12 +16,13 @@ from sklearn import svm
 from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 import time
+
 print(sklearn.__version__)
 print(joblib.__version__)
 datadir = "/Users/shaaranelango/Downloads/NvidiaJetson_SignDetection/Shaaran/dataset"
 pickle_filepath = "/Users/shaaranelango/Downloads/NvidiaJetson_SignDetection/Shaaran/pickled.pickle"
 i=0
-
+dataGen = tf.keras.preprocessing.image.ImageDataGenerator(rotation_range=20,width_shift_range=0.2,height_shift_range=0.2,shear_range=0.2,zoom_range=0.2,horizontal_flip=False,vertical_flip=False,fill_mode="nearest")
 # Load or initialize the processed images data
 flat_data_arr = []
 target_arr = []
@@ -31,6 +33,7 @@ categories = ['road','stop','speed','yellow','red','green']
 if os.path.exists(pickle_filepath):
     with open(pickle_filepath, "rb") as f:
         df = pickle.load(f)
+        print(df)
 else:
 
     for category in categories:
@@ -59,7 +62,7 @@ else:
     print(f'Data saved to {pickle_filepath}')
 
 
-
+print(df.shape)
 # df contains the dataframe for the inputs
 x=df.iloc[:,:-1] # Contains the rgb vals for each pixel
 y=df.iloc[:,-1] # Contains the targets (what it is)
@@ -70,8 +73,26 @@ x_scaled = StandardScaler().fit_transform(x)
 x = pd.DataFrame(x_scaled, columns=x.columns)
 
 # Train:Test split of 85:15, I believe this is a substantial enough split such that we are unlikely to overtrain and we have enough data to test with.
-x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.15,random_state=3,stratify=y)
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=5,stratify=y)
+print(x_train)
+# augmented_images = []
+# augmented_labels = []
+# num_augmentations = 2 # Number of augmented versions of this image
+# for image, label in zip(x_train, y_train):
+#     image = np.array(image)
+#     image = image.reshape((1,) + image.shape)  # Add a batch dimension
+#     for _ in range(num_augmentations):
+#         augmented_image = dataGen.flow(image, batch_size=1).next()[0]
+#         augmented_images.append(augmented_image)
+#         augmented_labels.append(label)
 
+# # Convert augmented data back to NumPy arrays
+# x_augmented = np.array(augmented_images)
+# y_augmented = np.array(augmented_labels)
+
+# # Combine the original data and augmented data
+# x_train_augmented = np.concatenate((x_train, x_augmented))
+# y_train_augmented = np.concatenate((y_train, y_augmented))
 # x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.70,random_state=3,stratify=y) # Using a very small training set (0.1) to get good hyperparams before doing the big training
 # param_grid={'C':[0.1,1,10],'gamma':[0.0001,0.001,0.1,1],'kernel':['rbf','poly']}
 # svc = svm.SVC(probability = True)
@@ -88,7 +109,7 @@ if os.path.exists(svcModel_filename):
     svcModel = joblib.load(svcModel_filename)
 else:
     print("Training SVC")
-    svcModel = svm.SVC(kernel='poly',gamma=0.0001,C=0.1,max_iter=100000000,probability=False)
+    svcModel = svm.SVC(kernel='poly',gamma=0.0001,C=0.1,max_iter=1000,probability=False)
     ## Using original 85:15 train-test split
     svcModel.fit(x_train,y_train)
     joblib.dump(svcModel, svcModel_filename)
@@ -128,19 +149,19 @@ print(random_labels)
 
 svcPred = svcModel.predict(random_rows)
 print(svcPred)
+images = ["blue.png","purple.png","speed.png","stop.png","yellow.png","hardTestRoad.jpg","testRoad.jpg","testStop.jpg"]
+for image in images:
 
-# for image in images:
-
-#     print("PREDICTING SVC")
-#     start_time = time.time()
-#     svcPred = svcModel.predict(resize(imread(image),(112,112,3)).reshape(1,-1))
-#     end_time = time.time()
+    print("PREDICTING SVC")
+    start_time = time.time()
+    svcPred = svcModel.predict(resize(imread(image),(112,112,3)).reshape(1,-1))
+    end_time = time.time()
 
 
-#     print(svcPred)
+    print(svcPred)
 
-#     # Calculate the elapsed time
-#     elapsed_time = end_time - start_time
+    # Calculate the elapsed time
+    elapsed_time = end_time - start_time
 
-#     print(f"Execution time: {elapsed_time} seconds")
+    print(f"Execution time: {elapsed_time} seconds")
 

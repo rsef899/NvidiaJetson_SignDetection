@@ -6,7 +6,7 @@ from skimage import exposure
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_score, accuracy_score, f1_score, recall_score, classification_report, confusion_matrix
 from sklearn.model_selection import GridSearchCV
-import cv2
+#import cv2
 
 import show_time
 
@@ -48,7 +48,7 @@ def fit_and_train_svm_model(x_training, x_valid, y_training, y_valid, save_model
     color_features_valid = []
 
     # apply hog on the data to get features
-    x_training_not_flat = x_training.reshape(786, 32, 32, 3)
+    x_training_not_flat = x_training.reshape(787, 32, 32, 3)
     for image in x_training_not_flat:
         hog_features = hog(image, orientations=ORIENTATIONS, pixels_per_cell=(PIXELS_PER_CELL, PIXELS_PER_CELL),
                            cells_per_block=(CELLS_PER_BLOCK, CELLS_PER_BLOCK), channel_axis=-1)
@@ -74,7 +74,7 @@ def fit_and_train_svm_model(x_training, x_valid, y_training, y_valid, save_model
         # only uncomment if we want to:
         # plot_testing_image(image, color_features)
 
-    color_features_training_flat = np.array(color_features_training).reshape(786, 108)
+    color_features_training_flat = np.array(color_features_training).reshape(787, 108)
 
     x_valid_not_flat = x_valid.reshape(197, 32, 32, 3)
     for image in x_valid_not_flat:
